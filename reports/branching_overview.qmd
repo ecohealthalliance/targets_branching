@@ -1,0 +1,279 @@
+---
+title: "Branching overview"
+subtitle: "Nathan Layman"
+format:
+  revealjs: 
+    theme: simple
+    css: style.css
+editor: visual
+---
+
+## Benefits of Targets
+
+-   Handles projects at scale
+
+-   Provides clear organization. Exposes the flow of project and 'self-documents'
+
+-   Targets takes care of dependency for you
+
+-   Increases reproducibility and readability
+
+## Before branching: background
+
+Before we get into targets we'll review:
+
+-   The group-split-apply-combine pattern
+
+-   Scope of variables in R
+
+## Group-split-apply-combine pattern
+
+A pattern is a general concept that applies across programming languages.
+
+```{r}
+library(tidyverse)
+iris
+```
+
+## Group-split-apply-combine pattern
+
+We can implement this in several ways. As a for loop:
+
+```{r, echo = T}
+result <- data.frame()
+
+# Group
+for(sp in unique(iris$Species)) {
+  
+  # Split
+  iris_sp = iris[iris$Species == sp,]
+
+  # Apply
+  iris_sp$Species <- iris_sp$Species |> toupper()
+  
+  # Combine
+  result <- rbind(result, iris_sp)
+}
+
+```
+
+## Group-split-apply-combine pattern
+
+We can implement this in several ways. As an apply call:
+
+```{r, echo = T}
+results <- lapply(unique(iris$Species), function(sp) {
+  iris_sp = iris[iris$Species == sp,]
+  iris_sp$Species <- iris_sp$Species |> toupper()
+  iris_sp
+}) |> bind_rows()
+
+```
+
+## Group-split-apply-combine pattern
+
+We can implement this in several ways. Or using tidy syntax
+
+```{r, echo = T}
+results <- iris |> 
+  group_by(Species) |> 
+  mutate(Species = Species |> toupper())
+```
+
+## Group-split-apply-combine pattern
+
+In all of them there is some kind of splitting and looping over results. Here is the result
+
+```{r}
+results |> as.data.frame()
+```
+
+## Group-split-apply-combine pattern
+
+There are two kinds of looping that can happen.
+
+-   [*Sequential*]{.underline}. When the results of processing one group feeds into the next.
+
+-   [*Parallel*]{.underline}. When each group can be processed independently.
+
+## Group-split-apply-combine pattern
+
+There are two kinds of looping that can happen.
+
+-   [[*Sequential*]{.underline}. When the results of processing one group feeds into the next.]{style="color: gray"}
+
+-   [*Parallel*]{.underline}. When each group can be processed independently.
+
+## Scope
+
+Scope refers to the part of a script where a name binding is valid. What I mean by that is:
+
+```{r, echo = T, eval=FALSE}
+sequential_print <- function(number) {
+  for(i in 1: number) {
+    print(i)
+  }
+}
+
+# What happens when we try to access the variable `i`?
+print(i)
+```
+
+## Scope
+
+There are several kinds of scope in R:
+
+-   Global. Variables that are in scope throughout
+
+-   Function. Variables that are in scope within a function
+
+-   Targets. Targets that get run during tar_make()
+
+-   Namespace, ...
+
+------------------------------------------------------------------------
+
+::: v-center-container
+[Scope is important because static and dynamic branching operate on variables that live in different scopes]{style="vertical-align: middle"}!
+:::
+
+------------------------------------------------------------------------
+
+## Static Branching Overview
+
+-   Benefit: clean branch names
+
+-   Cost: messy visnetwork, manual COMBINE
+
+-   Scope: Global
+
+-   Good for: Branching across *columns*\*
+
+-   Use: [tar_map()](https://books.ropensci.org/targets/static.html#map)
+
+[\*Exceptions abound]{style="font-size: 0.6em"}
+
+## Static branching sample visnetwork
+
+![](images/static_visnet.png)
+
+## Dynamic Branching Overview
+
+-   Benefit: clean tree, automatic aggregation
+
+-   Cost: messy branch names
+
+-   Scope: Targets
+
+-   Good for: Branching across *rows*\*
+
+-   Use: [patterns](https://books.ropensci.org/targets/dynamic.html#patterns) and [iteration](https://books.ropensci.org/targets/dynamic.html#iteration)
+
+[\*Exceptions abound]{style="font-size: 0.6em"}
+
+## Dynamic branching sample visnetwork
+
+![](images/dynamic_visnet.png)
+
+## Dynamic patterns and iteration
+
+Remember the group-split-apply-combine pattern we talked about earlier?
+
+`iteration` handles how we SPLIT and COMBINE.
+
+`pattern` handles the how we GROUP
+
+The target defined in `tar_target()` is where you specify the APPLY
+
+## Dynamic patterns and iteration
+
+Here's an example:
+
+```{r, echo = T, eval=FALSE}
+
+# remember dynamic branching operates on targets
+tar_target(data, iris),
+
+# Iteration here generates a branch for each species group
+tar_target(split_data, 
+           data |> 
+             group_by(Species) |> 
+             tar_group(),
+          iteration = "group")
+
+tar_target(data_toupper, split_data |> mutate(Spieces = toupper(Species))
+           pattern = map(split_data)
+           iteration = "vector"
+           )
+
+```
+
+## What does it look like when you run the pipeline?
+
+```{r, echo = T, eval=FALSE}
+
+> tar_make()
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
+✔ ggplot2 3.4.0      ✔ purrr   1.0.1 
+✔ tibble  3.1.8      ✔ dplyr   1.0.10
+✔ tidyr   1.2.1      ✔ stringr 1.5.0 
+✔ readr   2.1.3      ✔ forcats 0.5.2 
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+• start target iris
+• built target iris [0.001 seconds]
+• start target group_split_setosa
+• built target group_split_setosa [0.013 seconds]
+• start target group_split_virginica
+• built target group_split_virginica [0.005 seconds]
+• start target group_split
+• built target group_split [0.007 seconds]
+• start target group_split_versicolor
+• built target group_split_versicolor [0.003 seconds]
+• start target apply_setosa
+• built target apply_setosa [0.003 seconds]
+• start target apply_virginica
+• built target apply_virginica [0.001 seconds]
+• start branch apply_combine_011347ba
+• built branch apply_combine_011347ba [0.002 seconds]
+• start branch apply_combine_ba5b393e
+• built branch apply_combine_ba5b393e [0.002 seconds]
+• start branch apply_combine_afb309d3
+• built branch apply_combine_afb309d3 [0.002 seconds]
+• built pattern apply_combine
+• start target apply_versicolor
+• built target apply_versicolor [0.001 seconds]
+• end pipeline [0.139 seconds]
+```
+
+## What does it look like when you run the pipeline AGAIN?
+
+```{r, echo = T, eval=FALSE}
+> tar_make()
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.2 ──
+✔ ggplot2 3.4.0      ✔ purrr   1.0.1 
+✔ tibble  3.1.8      ✔ dplyr   1.0.10
+✔ tidyr   1.2.1      ✔ stringr 1.5.0 
+✔ readr   2.1.3      ✔ forcats 0.5.2 
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+✔ skip target iris
+✔ skip target group_split_setosa
+✔ skip target group_split_virginica
+✔ skip target group_split
+✔ skip target group_split_versicolor
+✔ skip target apply_setosa
+✔ skip target apply_virginica
+✔ skip branch apply_combine_011347ba
+✔ skip branch apply_combine_ba5b393e
+✔ skip branch apply_combine_afb309d3
+✔ skip pattern apply_combine
+✔ skip target apply_versicolor
+✔ skip pipeline [0.122 seconds]
+```
+
+# Now let's try it
+
+<https://github.com/ecohealthalliance/targets_branching>
