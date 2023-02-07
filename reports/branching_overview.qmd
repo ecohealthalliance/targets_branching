@@ -12,7 +12,9 @@ editor: visual
 
 -   Handles projects at scale
 
--   Provides clear organization. Exposes the flow of project and 'self-documents'
+-   Exposes the flow of the project
+
+-   Targets workflow 'self-documents'
 
 -   Targets takes care of dependency for you
 
