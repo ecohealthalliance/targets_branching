@@ -48,7 +48,6 @@ dynamic_branching <- tar_plan(
   # Q: What happens with vector iteration with non-conformable results?
   # Q: What happens if I add, remove, or fix a row in sampling_schemes? How much gets redone? 
   # Q: Does it depend on where I do it?
-  
 )
 
 

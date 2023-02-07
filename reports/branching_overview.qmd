@@ -277,3 +277,45 @@ tar_target(data_toupper, split_data |> mutate(Spieces = toupper(Species))
 # Now let's try it
 
 <https://github.com/ecohealthalliance/targets_branching>
+
+## Friends has this ever happened to you?
+
+Have you:
+
+-   Ever had one iteration fail in a big map_dfr() or map?
+
+-   then you have to figure out what went wrong
+
+-   fix the input data a little
+
+-   had to start ALL OVER.
+
+Well, NO MORE with dynamic branching!
+
+## What's more
+
+If you're running a ton of slow fitting models as branches and ONE FAILS you can still:
+
+1.  finish the pipeline anyway and
+
+2.  aggregate the ones that DIDN'T fail!
+
+Just include the following at the top of your targets.R file!
+
+```{r, echo = T, eval = F}
+tar_option_set(
+  error = "null" # Every dynamic branch that errors out just returns NULL.
+)
+```
+
+## but wait there's MORE!
+
+Making your dynamic branches run in parallel involves just 2 lines of code!
+
+1.  \`future::plan(future.callr::callr, workers = 5)\` at the top of your targets.R file
+
+2.  Then just run `tar_make_future()` instead of `tar_make()`!
+
+## And that's just the begining! {.v-center-container}
+
+![](images/targetopia.png)

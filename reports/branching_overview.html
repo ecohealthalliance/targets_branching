@@ -938,13 +938,51 @@
 <span id="cb9-22"><a href="#cb9-22"></a>✔ skip pipeline [<span class="fl">0.122</span> seconds]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
+<section>
 <section id="now-lets-try-it" class="title-slide slide level1 center">
 <h1>Now let’s try it</h1>
 <p><a href="https://github.com/ecohealthalliance/targets_branching" class="uri">https://github.com/ecohealthalliance/targets_branching</a></p>
-<div class="footer footer-default">
-
+</section>
+<section id="friends-has-this-ever-happened-to-you" class="slide level2">
+<h2>Friends has this ever happened to you?</h2>
+<p>Have you:</p>
+<ul>
+<li><p>Ever had one iteration fail in a big map_dfr() or map?</p></li>
+<li><p>then you have to figure out what went wrong</p></li>
+<li><p>fix the input data a little</p></li>
+<li><p>had to start ALL OVER.</p></li>
+</ul>
+<p>Well, NO MORE with dynamic branching!</p>
+</section>
+<section id="whats-more" class="slide level2">
+<h2>What’s more</h2>
+<p>If you’re running a ton of slow fitting models as branches and ONE FAILS you can still:</p>
+<ol type="1">
+<li><p>finish the pipeline anyway and</p></li>
+<li><p>aggregate the ones that DIDN’T fail!</p></li>
+</ol>
+<p>Just include the following at the top of your targets.R file!</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="fu">tar_option_set</span>(</span>
+<span id="cb10-2"><a href="#cb10-2"></a>  <span class="at">error =</span> <span class="st">"null"</span> <span class="co"># Every dynamic branch that errors out just returns NULL.</span></span>
+<span id="cb10-3"><a href="#cb10-3"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
+<section id="but-wait-theres-more" class="slide level2">
+<h2>but wait there’s MORE!</h2>
+<p>Making your dynamic branches run in parallel involves just 2 lines of code!</p>
+<ol type="1">
+<li><p>`future::plan(future.callr::callr, workers = 5)` at the top of your targets.R file</p></li>
+<li><p>Then just run <code>tar_make_future()</code> instead of <code>tar_make()</code>!</p></li>
+</ol>
+</section>
+<section id="and-thats-just-the-begining" class="slide level2 v-center-container">
+<h2>And that’s just the begining!</h2>
+
+<img data-src="images/targetopia.png" class="r-stretch"><div class="footer footer-default">
+
+</div>
+</section></section>
     </div>
   </div>
 
